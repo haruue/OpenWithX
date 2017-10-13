@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--suppress AndroidElementNotAllowed -->
+    <moe.haruue.owx.preference.ActivityEnableSwitchPreference
+        android:key="main_switch"
+        android:title="@string/switch_anything"
+        android:summaryOn="@string/switch_anything_summary_on"
+        android:summaryOff="@string/switch_anything_summary_off"
+        app:activityClassName="moe.haruue.owx.OpenAnythingDelegateActivity"/>
+
+
+</PreferenceScreen>

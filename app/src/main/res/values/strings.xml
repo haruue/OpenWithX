@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">OpenWithX</string>
+    <string name="switch_">Switch</string>
+    <string name="switch_anything">Open Anything</string>
+    <string name="switch_anything_summary_on">Tell system this application can be used to open anything so we can handle the open operation.\nSwitch this off will disable major function of this application.</string>
+    <string name="switch_anything_summary_off">Major function of this application disable for system will never delegated open operation to us.</string>
 </resources>
