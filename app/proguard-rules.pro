@@ -42,7 +42,7 @@
 
 # keep by default
 -keep public class * extends android.app.Activity
--keep public class * extends android.app.AppCompatActivity
+-keep public class * extends android.support.v7.app.AppCompatActivity
 -keep public class * extends android.app.Application
 -keep public class * extends android.app.Service
 -keep public class * extends android.content.BroadcastReceiver
@@ -88,8 +88,13 @@
     *;
 }
 
+-dontnote android.net.http.*
+-dontnote org.apache.commons.codec.**
+-dontnote org.apache.http.**
+
 # kotlin
 -dontwarn kotlin.**
+-dontnote kotlin.**
 -keepclassmembers class **$WhenMappings {
     <fields>;
 }
@@ -153,3 +158,7 @@
     long consumerIndex;
 }
 -dontwarn rx.internal.util.unsafe.**
+
+# material preference
+-keep public class * extends moe.shizuku.preference.Preference
+-dontwarn moe.shizuku.preference.**
