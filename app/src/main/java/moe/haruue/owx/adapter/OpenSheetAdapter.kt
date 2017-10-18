@@ -22,9 +22,9 @@ import moe.haruue.owx.R
  */
 class OpenSheetAdapter(
         private val loadExactMatches: (callback: (exactMatches: List<ResolveInfo>) -> Unit) -> Unit,
-        private val loadAllMatches: (callback: (allMatches: List<ResolveInfo>) -> Unit) -> Unit
-//        private val startResolveInfo: (resolveInfo: ResolveInfo) -> Unit,
-//        private val startShare: () -> Unit
+        private val loadAllMatches: (callback: (allMatches: List<ResolveInfo>) -> Unit) -> Unit,
+        private val startResolveInfo: (resolveInfo: ResolveInfo) -> Unit,
+        private val startShare: () -> Unit
 ) : RecyclerView.Adapter<OpenSheetAdapter.BaseViewHolder>() {
 
     companion object {
@@ -159,6 +159,9 @@ class OpenSheetAdapter(
                         val pm = holder.itemView.context.packageManager
                         holder.icon.setImageDrawable(exactMatches[index].loadIcon(pm))
                         holder.name.text = exactMatches[index].loadLabel(pm)
+                        holder.itemView.setOnClickListener {
+                            startResolveInfo(exactMatches[index])
+                        }
                     }
                     VT_SHARE -> {
                         val context = holder.itemView.context
@@ -166,12 +169,18 @@ class OpenSheetAdapter(
                         holder.icon.setImageDrawable(VectorDrawableCompat.create(res, R.drawable.ic_send_black_24dp, null))
                         holder.icon.supportImageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.colorAccent))
                         holder.name.text = res.getText(R.string.share)
+                        holder.itemView.setOnClickListener {
+                            startShare()
+                        }
                     }
                     VT_OTHERS -> {
                         val index = position - allMatchesStartPosition
                         val pm = holder.itemView.context.packageManager
                         holder.icon.setImageDrawable(allMatches[index].loadIcon(pm))
                         holder.name.text = allMatches[index].loadLabel(pm)
+                        holder.itemView.setOnClickListener {
+                            startResolveInfo(allMatches[index])
+                        }
                     }
                     VT_LOAD_ALL -> {
                         if (shouldShowAllMatchesLoadMoreView) {
@@ -212,7 +221,7 @@ class OpenSheetAdapter(
     }
 
     /**
-     * Hide [View] in a [RecyclerView]
+     * Hide a [View] in a [RecyclerView]
      */
     private var View.visible: Boolean
         get() {
