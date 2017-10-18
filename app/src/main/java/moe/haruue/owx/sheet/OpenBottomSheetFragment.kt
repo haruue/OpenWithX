@@ -33,11 +33,11 @@ class OpenBottomSheetFragment : BottomSheetDialogFragment() {
         get() = activity.packageName
 
     private fun finish() {
-        activity.finish()
+        activity?.finish()
     }
 
     private fun runOnUiThread(r: () -> Unit) {
-        activity.runOnUiThread(r)
+        activity?.runOnUiThread(r)
     }
 
     private val exactMatches by lazy @SuppressLint("SdCardPath") {
