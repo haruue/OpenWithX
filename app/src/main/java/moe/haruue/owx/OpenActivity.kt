@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
@@ -22,15 +23,16 @@ class OpenActivity : AppCompatActivity() {
     private val exactMatches by lazy @SuppressLint("SdCardPath") {
 
         val targetIntent = Intent(Intent.ACTION_VIEW)
-        targetIntent.type = intent.type
+        targetIntent.setDataAndType(Uri.parse("file://*.*"), intent.type)
         packageManager.queryIntentActivities(targetIntent, PackageManager.MATCH_DEFAULT_ONLY)
                 .filter { it.activityInfo.exported && it.activityInfo.packageName != packageName }
     }
 
     private val allMatches by lazy {
         val targetIntent = Intent(Intent.ACTION_VIEW)
+        targetIntent.setDataAndType(Uri.parse("file://*.*"), "*/*")
         packageManager.queryIntentActivities(targetIntent, 0)
-                .filter { it !in exactMatches && it.activityInfo.exported && it.resolvePackageName != packageName }
+                .filter { it !in exactMatches && it.activityInfo.exported && it.activityInfo.packageName != packageName }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

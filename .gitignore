@@ -13,3 +13,4 @@
 .externalNativeBuild
 signing.properties
 *.apk
+/.release
