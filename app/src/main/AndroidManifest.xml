@@ -15,7 +15,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".OpenActivity"/>
+        <activity android:name=".OpenActivity"
+                  android:theme="@style/AppTheme.HalfTransparentWindow"/>
         <activity android:name=".OpenAnythingDelegateActivity"
                   android:exported="true"
                   android:theme="@style/Transparent">
