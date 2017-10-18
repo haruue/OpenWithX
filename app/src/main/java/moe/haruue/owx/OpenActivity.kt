@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.View
 import kotlinx.android.synthetic.main.activity_open.*
 import moe.haruue.owx.adapter.OpenSheetAdapter
@@ -20,8 +21,9 @@ import moe.haruue.owx.adapter.OpenSheetAdapter
  */
 class OpenActivity : AppCompatActivity() {
 
-    private val exactMatches by lazy @SuppressLint("SdCardPath") {
+    lateinit var bottomSheetBehavior: BottomSheetBehavior<RecyclerView>
 
+    private val exactMatches by lazy @SuppressLint("SdCardPath") {
         val targetIntent = Intent(Intent.ACTION_VIEW)
         targetIntent.setDataAndType(Uri.parse("file://*.*"), intent.type)
         packageManager.queryIntentActivities(targetIntent, PackageManager.MATCH_DEFAULT_ONLY)
@@ -37,12 +39,11 @@ class OpenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         setContentView(R.layout.activity_open)
         list.layoutManager = LinearLayoutManager(this)
-        val adapter = OpenSheetAdapter(this::loadExactMatches, this::loadAllMatches, this::startResolveInfo, this::startShare)
-        list.adapter = adapter
-        adapter.notifyDataSetChanged()
-        BottomSheetBehavior.from(list).setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+        bottomSheetBehavior = BottomSheetBehavior.from(list)
+        bottomSheetBehavior.setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
                 // do nothing
             }
@@ -53,6 +54,9 @@ class OpenActivity : AppCompatActivity() {
                 }
             }
         })
+        val adapter = OpenSheetAdapter(this::loadExactMatches, this::loadAllMatches, this::startResolveInfo, this::startShare)
+        list.adapter = adapter
+        adapter.notifyDataSetChanged()
     }
 
     private fun startResolveInfo(info: ResolveInfo) {
@@ -91,6 +95,15 @@ class OpenActivity : AppCompatActivity() {
             val t = allMatches
             runOnUiThread { callback(t) }
         }.start()
+    }
+
+    override fun onBackPressed() {
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
 }
