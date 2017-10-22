@@ -2,9 +2,8 @@ package moe.haruue.owx.adapter
 
 import android.annotation.SuppressLint
 import android.content.pm.ResolveInfo
-import android.content.res.ColorStateList
+import android.support.annotation.IdRes
 import android.support.annotation.LayoutRes
-import android.support.graphics.drawable.VectorDrawableCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.AppCompatImageView
 import android.support.v7.widget.RecyclerView
@@ -12,7 +11,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.TextView
 import moe.haruue.owx.R
 
@@ -28,28 +26,12 @@ class OpenSheetAdapter(
 ) : RecyclerView.Adapter<OpenSheetAdapter.BaseViewHolder>() {
 
     companion object {
-        const val VT_HEADER = 1
-        const val VT_SHARE = 2
         const val VT_RECOMMEND = 3
         const val VT_OTHERS = 4
-        const val VT_LOADING_EXACT = 5
-        const val VT_LOAD_ALL = 6
         const val VT_LOADING_ALL = 7
     }
 
-    private var defaultOpenMethod = false
-
-    private var shouldShowExactMatchesLoadingView = true
-        set(value) {
-            try {
-                field = value
-                notifyItemChanged(loadingExactMatchesPosition)
-            } catch (e: Exception) {
-                Log.e("OpenSheetAdapter", "shouldShowExactMatchesLoadingView@setter: $field", e)
-            }
-        }
-
-    private var shouldShowAllMatchesLoadingView = false
+    private var shouldShowAllMatchesLoadingView = true
         set(value) {
             try {
                 field = value
@@ -59,145 +41,125 @@ class OpenSheetAdapter(
             }
         }
 
-    private var shouldShowAllMatchesLoadMoreView = true
-        set(value) {
-            try {
-                field = value
-                notifyItemChanged(loadAllMatchesPosition)
-            } catch (e: Exception) {
-                Log.e("OpenSheetAdapter", "shouldShowAllMatchesLoadMoreView@setter: $field", e)
-            }
-        }
+    private inline val exactMatchesCount
+        get() = exactMatches.size + 1 // because we use share as the first matched item
 
-    private val exactMatchesCount
-        get() = exactMatches.size
+    private inline val exactMatchesViewCount
+        get() = Math.ceil(exactMatchesCount.toDouble() / 4.0).toInt()
 
-    private val allMatchesCount
+    private inline val allMatchesCount
         get() = allMatches.size
 
-    private val headerPosition = 0
+    private inline val allMatchesViewCount
+        get() = Math.ceil(allMatchesCount.toDouble() / 4.0).toInt()
 
-    private val loadingExactMatchesPosition = 1
+    private val exactMatchesStartPosition = 0
 
-    private val exactMatchesStartPosition = 2
+    private inline val loadingAllMatchesPosition
+        get() = exactMatchesStartPosition + exactMatchesViewCount
 
-    private val sharePosition
-        get() = exactMatchesStartPosition + exactMatchesCount
-
-    private val loadAllMatchesPosition
-        get() = sharePosition + 1
-
-    private val loadingAllMatchesPosition
-        get() = loadAllMatchesPosition + 1
-
-    private val allMatchesStartPosition
+    private inline val allMatchesStartPosition
         get() = loadingAllMatchesPosition + 1
 
     private var exactMatches = mutableListOf<ResolveInfo>()
         set(value) {
             field.addAll(value)
-            shouldShowExactMatchesLoadingView = false
-            notifyItemRangeInserted(exactMatchesStartPosition, exactMatchesCount)
+            Log.d("OpenSheetAdapter", "exactMatches\$setter: length=${field.size}")
+            notifyItemChanged(exactMatchesStartPosition)
+            if (exactMatchesCount > 1) {
+                notifyItemRangeInserted(exactMatchesStartPosition + 1, exactMatchesViewCount - 1)
+            }
         }
 
     private var allMatches = mutableListOf<ResolveInfo>()
         set(value) {
             field.addAll(value)
+            Log.d("OpenSheetAdapter", "allMatches\$setter: length=${field.size}")
             shouldShowAllMatchesLoadingView = false
-            notifyItemRangeInserted(allMatchesStartPosition, allMatchesCount)
+            notifyItemRangeInserted(allMatchesStartPosition, allMatchesViewCount)
         }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         return when (viewType) {
-            VT_HEADER -> HeaderViewHolder(parent)
-            VT_SHARE -> ItemViewHolder(parent, viewType)
-            VT_RECOMMEND -> ItemViewHolder(parent, viewType)
-            VT_OTHERS -> ItemViewHolder(parent, viewType)
-            VT_LOADING_EXACT -> LoadingViewHolder(parent, viewType)
-            VT_LOAD_ALL -> ItemViewHolder(parent, viewType)
+            VT_RECOMMEND -> RowViewHolder(parent, viewType)
+            VT_OTHERS -> RowViewHolder(parent, viewType)
             VT_LOADING_ALL -> LoadingViewHolder(parent, viewType)
             else -> throw IllegalArgumentException("Unexpected view type $viewType in OpenSheetAdapter.")
         }
     }
 
-    @SuppressLint("RestrictedApi")
-    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        when (holder) {
-            is HeaderViewHolder -> {
-                holder.defaultCheckBox.setOnCheckedChangeListener { _, isChecked -> defaultOpenMethod = isChecked }
-            }
-            is LoadingViewHolder -> {
-                when (holder.viewType) {
-                    VT_LOADING_EXACT -> {
-                        if (shouldShowExactMatchesLoadingView) {
-                            holder.itemView.visible = true
-                            loadExactMatches {
-                                this@OpenSheetAdapter.exactMatches = it.toMutableList()
-                                shouldShowExactMatchesLoadingView = false
-                            }
-                        } else {
-                            holder.itemView.visible = false
-                        }
+    private var whatLoading = 0
+        set(value) {
+            field = value
+            when (value) {
+                VT_RECOMMEND -> {
+                    loadExactMatches {
+                        this@OpenSheetAdapter.exactMatches = it.toMutableList()
+                        whatLoading = VT_OTHERS
                     }
-                    VT_LOADING_ALL -> {
-                        if (shouldShowAllMatchesLoadingView) {
-                            holder.itemView.visible = true
-                            loadAllMatches {
-                                this@OpenSheetAdapter.allMatches = it.toMutableList()
-                                shouldShowAllMatchesLoadingView = false
-                            }
-                        } else {
-                            holder.itemView.visible = false
-                        }
+                }
+                VT_OTHERS -> {
+                    loadAllMatches {
+                        this@OpenSheetAdapter.allMatches = it.toMutableList()
+                        whatLoading = -1
+                        shouldShowAllMatchesLoadingView = false
                     }
                 }
             }
-            is ItemViewHolder -> {
+        }
+
+    @SuppressLint("RestrictedApi")
+    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
+        Log.d("OpenSheetAdapter", "onBindViewHolder: position=$position")
+        when (holder) {
+            is LoadingViewHolder -> {
                 when (holder.viewType) {
-                    VT_RECOMMEND -> {
-                        val index = position - exactMatchesStartPosition
-                        val pm = holder.itemView.context.packageManager
-                        holder.icon.setImageDrawable(exactMatches[index].loadIcon(pm))
-                        holder.name.text = exactMatches[index].loadLabel(pm)
-                        holder.itemView.setOnClickListener {
-                            startResolveInfo(exactMatches[index])
-                        }
-                    }
-                    VT_SHARE -> {
-                        val context = holder.itemView.context
-                        val res = context.resources
-                        holder.icon.setImageDrawable(VectorDrawableCompat.create(res, R.drawable.ic_send_black_24dp, null))
-                        holder.icon.supportImageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.colorAccent))
-                        holder.name.text = res.getText(R.string.share)
-                        holder.itemView.setOnClickListener {
-                            startShare()
-                        }
-                    }
-                    VT_OTHERS -> {
-                        val index = position - allMatchesStartPosition
-                        val pm = holder.itemView.context.packageManager
-                        holder.icon.setImageDrawable(allMatches[index].loadIcon(pm))
-                        holder.name.text = allMatches[index].loadLabel(pm)
-                        holder.itemView.setOnClickListener {
-                            startResolveInfo(allMatches[index])
-                        }
-                    }
-                    VT_LOAD_ALL -> {
-                        if (shouldShowAllMatchesLoadMoreView) {
-                            val context = holder.itemView.context
-                            val res = context.resources
-                            holder.icon.setImageDrawable(VectorDrawableCompat.create(res, R.drawable.ic_refresh_black_24dp, null))
-                            holder.icon.supportImageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.colorAccent))
-                            holder.name.text = res.getText(R.string.load_all)
-                            holder.itemView.setOnClickListener {
-                                shouldShowAllMatchesLoadMoreView = false
-                                shouldShowAllMatchesLoadingView = true
-                            }
+                    VT_LOADING_ALL -> {
+                        if (shouldShowAllMatchesLoadingView) {
                             holder.itemView.visible = true
+                            if (whatLoading == 0) {
+                                whatLoading = VT_RECOMMEND
+                            }
                         } else {
                             holder.itemView.visible = false
                         }
                     }
+                    else -> throw IllegalArgumentException("Unexpected view type ${holder.viewType} in OpenSheetAdapter.")
+                }
+            }
+            is RowViewHolder -> {
+                val rowArray = mutableListOf<ResolveInfo?>()
+                if (position == exactMatchesStartPosition) {
+                    // null for share
+                    rowArray.add(null)
+                }
+                for (i in rowArray.size..3) {
+                    when (holder.viewType) {
+                        VT_RECOMMEND -> {
+                            val row = position - exactMatchesStartPosition
+                            /*
+                                        0   1   2   3   i
+                                    -------------------
+                                0   |   s   0   1   2
+                                1   |   3   4   5   6
+                                2   |   7   8   9   10
+                              row   |                   value
+                             */
+                            val index = row * 4 + i - 1
+                            if (index < exactMatches.size) {
+                                rowArray.add(exactMatches[index])
+                            }
+                        }
+                        VT_OTHERS -> {
+                            val row = position - allMatchesStartPosition
+                            val index = row * 4 + i
+                            if (index < allMatches.size) {
+                                rowArray.add(allMatches[index])
+                            }
+                        }
+                        else -> throw IllegalArgumentException("Unexpected view type ${holder.viewType} in OpenSheetAdapter.")
+                    }
+                    holder.onBind(rowArray, startResolveInfo, startShare)
                 }
             }
             else -> throw IllegalArgumentException("Unexpected holder type ${holder::class.java.name} in OpenSheetAdapter.")
@@ -205,25 +167,30 @@ class OpenSheetAdapter(
     }
 
     override fun getItemCount(): Int {
-        return allMatchesStartPosition + allMatchesCount
+        Log.d("OpenSheetAdapter", "getItemCount: \n" +
+                "exactMatchesStartPosition=$exactMatchesStartPosition\n" +
+                "exactMatchesViewCount=$exactMatchesViewCount,\n" +
+                "loadingAllMatchesPosition=$loadingAllMatchesPosition\n" +
+                "allMatchesStartPosition=$allMatchesStartPosition\n" +
+                "allMatchesViewCount=$allMatchesViewCount")
+        Log.d("OpenSheetAdapter", "getItemCount: count=${exactMatchesViewCount + 1 + allMatchesViewCount}")
+        return exactMatchesViewCount + 1 + allMatchesViewCount
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when {
-            position == headerPosition -> VT_HEADER
-            position == loadingExactMatchesPosition -> VT_LOADING_EXACT
-            position >= exactMatchesStartPosition && position < exactMatchesStartPosition + exactMatchesCount -> VT_RECOMMEND
-            position == sharePosition -> VT_SHARE
-            position == 2 + exactMatchesCount + 1 -> VT_LOAD_ALL
-            position == 2 + exactMatchesCount + 2 -> VT_LOADING_ALL
+        val type = when {
+            position >= exactMatchesStartPosition && position < exactMatchesStartPosition + exactMatchesViewCount -> VT_RECOMMEND
+            position == loadingAllMatchesPosition -> VT_LOADING_ALL
             else -> VT_OTHERS
         }
+        Log.d("OpenSheetAdapter", "getItemViewType: position=$position, type=$type")
+        return type
     }
 
     /**
      * Hide a [View] in a [RecyclerView]
      */
-    private var View.visible: Boolean
+    private inline var View.visible: Boolean
         get() {
             return this.visibility == View.VISIBLE
         }
@@ -246,13 +213,66 @@ class OpenSheetAdapter(
                 : this(LayoutInflater.from(parent.context).inflate(layout, parent, false), viewType)
     }
 
-    class HeaderViewHolder(parent: ViewGroup) : BaseViewHolder(parent, R.layout.item_sheet_header, VT_HEADER) {
-        val defaultCheckBox: CheckBox = itemView.findViewById(R.id.cb_default)
-    }
+    class RowViewHolder(parent: ViewGroup, viewType: Int) : BaseViewHolder(parent, R.layout.row_sheet_app, viewType) {
 
-    class ItemViewHolder(parent: ViewGroup, viewType: Int) : BaseViewHolder(parent, R.layout.item_sheet_app, viewType) {
-        val icon: AppCompatImageView = itemView.findViewById(R.id.iv_app_icon)
-        val name: TextView = itemView.findViewById(R.id.tv_app_name)
+        init {
+            if (viewType == VT_RECOMMEND) {
+                itemView.setBackgroundColor(ContextCompat.getColor(parent.context, R.color.material_gray_200))
+            } else {
+                itemView.setBackgroundColor(ContextCompat.getColor(parent.context, R.color.material_white))
+            }
+        }
+
+        class Item(val itemView: View) {
+            constructor(parent: View, @IdRes id: Int): this(parent.findViewById(id))
+            val icon by lazy { itemView.findViewById<AppCompatImageView>(android.R.id.icon) }
+            val name by lazy { itemView.findViewById<TextView>(android.R.id.text1) }
+            val app by lazy { itemView.findViewById<TextView>(android.R.id.text2) }
+
+            inline var visibility : Int
+                get() = itemView.visibility
+                set(value) { itemView.visibility = value }
+        }
+
+        val items by lazy {
+            with(itemView) {
+                listOf(Item(itemView, R.id.item1),
+                       Item(itemView, R.id.item2),
+                       Item(itemView, R.id.item3),
+                       Item(itemView, R.id.item4))
+            }
+        }
+
+        fun onBind(rowArray: List<ResolveInfo?>,
+                   startResolveInfo: (resolveInfo: ResolveInfo) -> Unit,
+                   startShare: () -> Unit) {
+            for (i in 0..3) {
+                if (i >= rowArray.size) {
+                    items[i].visibility = View.INVISIBLE
+                    return
+                }
+                val context = itemView.context
+                if (rowArray[i] == null) {
+                    // share
+                    items[i].icon.setImageDrawable(context.getDrawable(R.drawable.ic_send_black_24dp))
+                    items[i].name.text = context.getText(R.string.share)
+                    items[i].app.visibility = View.GONE
+                    items[i].itemView.setOnClickListener { startShare() }
+                    items[i].visibility = View.VISIBLE
+                    return
+                }
+                val pm = context.packageManager
+                val info = rowArray[i]!!
+                items[i].icon.setImageDrawable(info.loadIcon(pm))
+                items[i].name.text = info.loadLabel(pm)
+                items[i].app.text = pm.getApplicationLabel(info.activityInfo.applicationInfo)
+                items[i].app.visibility = View.VISIBLE
+                items[i].itemView.setOnClickListener { startResolveInfo(info) }
+                items[i].visibility = View.VISIBLE
+            }
+
+        }
+
     }
 
     class LoadingViewHolder(parent: ViewGroup, viewType: Int) : BaseViewHolder(parent, R.layout.item_sheet_loading, viewType)

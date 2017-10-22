@@ -8,4 +8,5 @@
     <string name="set_to_default">set to default</string>
     <string name="share">Share with…</string>
     <string name="load_all">Load all…</string>
+    <string name="noApplications">No apps can perform this action.</string>
 </resources>

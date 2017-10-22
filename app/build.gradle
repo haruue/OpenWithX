@@ -9,7 +9,7 @@ android {
     buildToolsVersion "26.0.2"
     defaultConfig {
         applicationId "moe.haruue.owx"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 26
         versionCode 2
         versionName "0.1.1-alpha"
@@ -43,6 +43,7 @@ dependencies {
     implementation 'moe.shizuku.preference:preference:2.0.6'
     implementation "com.android.support:recyclerview-v7:$support_version"
     implementation "com.android.support:design:$support_version"
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta3'
 }
 
 def ksFile = rootProject.file('signing.properties')
