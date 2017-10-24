@@ -43,7 +43,7 @@ dependencies {
     implementation 'moe.shizuku.preference:preference:2.0.6'
     implementation "com.android.support:recyclerview-v7:$support_version"
     implementation "com.android.support:design:$support_version"
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta3'
+    implementation "org.jetbrains.anko:anko-common:0.8.3"
 }
 
 def ksFile = rootProject.file('signing.properties')

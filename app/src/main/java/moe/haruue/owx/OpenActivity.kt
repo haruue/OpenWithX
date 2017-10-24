@@ -19,16 +19,16 @@ import moe.haruue.owx.adapter.OpenSheetAdapter
 class OpenActivity : AppCompatActivity() {
 
     private val exactMatches by lazy @SuppressLint("SdCardPath") {
-        val targetIntent = Intent(Intent.ACTION_VIEW)
-        targetIntent.setDataAndType(Uri.parse("file://*.*"), intent.type)
-        packageManager.queryIntentActivities(targetIntent, PackageManager.MATCH_DEFAULT_ONLY)
+        val queryIntent = Intent(Intent.ACTION_VIEW)
+        queryIntent.setDataAndType(intent.data, intent.type)
+        packageManager.queryIntentActivities(queryIntent, PackageManager.MATCH_DEFAULT_ONLY)
                 .filter { it.activityInfo.exported && it.activityInfo.packageName != packageName }
     }
 
     private val allMatches by lazy {
-        val targetIntent = Intent(Intent.ACTION_VIEW)
-        targetIntent.setDataAndType(Uri.parse("file://*.*"), "*/*")
-        packageManager.queryIntentActivities(targetIntent, 0)
+        val queryIntent = Intent(Intent.ACTION_VIEW)
+        queryIntent.setDataAndType(Uri.parse("file://*.*"), "*/*")
+        packageManager.queryIntentActivities(queryIntent, 0)
                 .filter { it !in exactMatches && it.activityInfo.exported && it.activityInfo.packageName != packageName }
     }
 
@@ -73,10 +73,12 @@ class OpenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         setContentView(R.layout.activity_open)
 
-        contentPanel.setOnDismissedListener { finish() }
+        contentPanel.setOnDismissedListener {
+            finish()
+            overridePendingTransition(0, 0)
+        }
 
         list.layoutManager = LinearLayoutManager(this)
         val adapter = OpenSheetAdapter(this::loadExactMatches, this::loadAllMatches, this::startResolveInfo, this::startShare)
@@ -85,8 +87,11 @@ class OpenActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        contentPanel.isCollapsed = true
-        super.onBackPressed()
+        if (!contentPanel.isCollapsed) {
+            contentPanel.isCollapsed = true
+        } else {
+            super.onBackPressed()
+        }
     }
 
 }

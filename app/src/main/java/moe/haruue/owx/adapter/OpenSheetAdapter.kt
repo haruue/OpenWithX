@@ -64,9 +64,8 @@ class OpenSheetAdapter(
     private var exactMatches = mutableListOf<ResolveInfo>()
         set(value) {
             field.addAll(value)
-            Log.d("OpenSheetAdapter", "exactMatches\$setter: length=${field.size}")
             notifyItemChanged(exactMatchesStartPosition)
-            if (exactMatchesCount > 1) {
+            if (exactMatchesViewCount > 1) {
                 notifyItemRangeInserted(exactMatchesStartPosition + 1, exactMatchesViewCount - 1)
             }
         }
@@ -74,7 +73,6 @@ class OpenSheetAdapter(
     private var allMatches = mutableListOf<ResolveInfo>()
         set(value) {
             field.addAll(value)
-            Log.d("OpenSheetAdapter", "allMatches\$setter: length=${field.size}")
             shouldShowAllMatchesLoadingView = false
             notifyItemRangeInserted(allMatchesStartPosition, allMatchesViewCount)
         }
@@ -110,7 +108,6 @@ class OpenSheetAdapter(
 
     @SuppressLint("RestrictedApi")
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        Log.d("OpenSheetAdapter", "onBindViewHolder: position=$position")
         when (holder) {
             is LoadingViewHolder -> {
                 when (holder.viewType) {
@@ -167,13 +164,6 @@ class OpenSheetAdapter(
     }
 
     override fun getItemCount(): Int {
-        Log.d("OpenSheetAdapter", "getItemCount: \n" +
-                "exactMatchesStartPosition=$exactMatchesStartPosition\n" +
-                "exactMatchesViewCount=$exactMatchesViewCount,\n" +
-                "loadingAllMatchesPosition=$loadingAllMatchesPosition\n" +
-                "allMatchesStartPosition=$allMatchesStartPosition\n" +
-                "allMatchesViewCount=$allMatchesViewCount")
-        Log.d("OpenSheetAdapter", "getItemCount: count=${exactMatchesViewCount + 1 + allMatchesViewCount}")
         return exactMatchesViewCount + 1 + allMatchesViewCount
     }
 
@@ -183,7 +173,6 @@ class OpenSheetAdapter(
             position == loadingAllMatchesPosition -> VT_LOADING_ALL
             else -> VT_OTHERS
         }
-        Log.d("OpenSheetAdapter", "getItemViewType: position=$position, type=$type")
         return type
     }
 
@@ -249,7 +238,7 @@ class OpenSheetAdapter(
             for (i in 0..3) {
                 if (i >= rowArray.size) {
                     items[i].visibility = View.INVISIBLE
-                    return
+                    break
                 }
                 val context = itemView.context
                 if (rowArray[i] == null) {
@@ -259,7 +248,7 @@ class OpenSheetAdapter(
                     items[i].app.visibility = View.GONE
                     items[i].itemView.setOnClickListener { startShare() }
                     items[i].visibility = View.VISIBLE
-                    return
+                    continue
                 }
                 val pm = context.packageManager
                 val info = rowArray[i]!!

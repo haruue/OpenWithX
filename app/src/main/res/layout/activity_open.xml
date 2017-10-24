@@ -20,6 +20,7 @@
     android:layout_height="match_parent"
     tools:layout_editor_absoluteY="81dp"
     android:maxWidth="@dimen/resolver_max_width"
+    android:fitsSystemWindows="true"
     app:maxCollapsedHeight="288dp"
     app:maxCollapsedHeightSmall="56dp"
     android:id="@+id/contentPanel">
