@@ -163,6 +163,12 @@ class OpenSheetAdapter(
         }
     }
 
+    override fun onViewRecycled(holder: BaseViewHolder?) {
+        when (holder) {
+            is RowViewHolder -> holder.onRecycled()
+        }
+    }
+
     override fun getItemCount(): Int {
         return exactMatchesViewCount + 1 + allMatchesViewCount
     }
@@ -221,6 +227,11 @@ class OpenSheetAdapter(
             inline var visibility : Int
                 get() = itemView.visibility
                 set(value) { itemView.visibility = value }
+
+            override fun toString(): String {
+                return "Item(name=${name.text}, visibility=$visibility)"
+            }
+
         }
 
         val items by lazy {
@@ -260,6 +271,10 @@ class OpenSheetAdapter(
                 items[i].visibility = View.VISIBLE
             }
 
+        }
+
+        fun onRecycled() {
+            items.forEach { it.visibility = View.INVISIBLE }
         }
 
     }
