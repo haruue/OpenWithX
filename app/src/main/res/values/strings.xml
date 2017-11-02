@@ -9,4 +9,5 @@
     <string name="share">Share with…</string>
     <string name="load_all">Load all…</string>
     <string name="noApplications">No apps can perform this action.</string>
+    <string name="file_share_only">Only file sharing can be open.</string>
 </resources>
